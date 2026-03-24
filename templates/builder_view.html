@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRPG Builder - 8-Bit Edition</title>
+
+    <!-- 성능 최적화: CDN 사전 연결 -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://unpkg.com">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"
+        crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Dalgona/neodgm/neodgm.css">
+
+    <style>
+        :root {
+            /* 8-Bit Night Palette */
+            --bg-night-start: #0B0B19;
+            --bg-night-end: #1A0B2E;
+            --pixel-border: #4A4A6A;
+            --pixel-border-light: #6A6A8A;
+            --text-main: #E0E0E0;
+            --text-accent: #FFFACD;
+            /* Lemon Chiffon (Star color) */
+            --color-primary: #6366f1;
+            /* Indigo */
+            --color-danger: #FF007F;
+            /* Deep Pink */
+            --color-success: #00FFFF;
+            /* Cyan */
+            --color-item: #FFD700;
+            /* Gold for Items */
+        }
+
+        body {
+            font-family: 'NeoDunggeunmo', sans-serif;
+            background-color: var(--bg-night-start);
+            color: var(--text-main);
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .font-pixel {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* CRT Effect */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 0.97;
+            }
+
+            50% {
+                opacity: 0.95;
+            }
+
+            100% {
+                opacity: 0.97;
+            }
+        }
+
+        /* Retro Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-night-start);
+            border: 2px solid var(--pixel-border);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--pixel-border);
+            border: 1px solid var(--bg-night-start);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--pixel-border-light);
+        }
+
+        /* Pixel Borders */
+        .pixel-box {
+            background-color: rgba(19, 19, 32, 0.95);
+            box-shadow:
+                -2px 0 0 0 var(--pixel-border),
+                2px 0 0 0 var(--pixel-border),
+                0 -2px 0 0 var(--pixel-border),
+                0 2px 0 0 var(--pixel-border);
+            margin: 2px;
+        }
+
+        /* Buttons & Inputs */
+        .pixel-btn {
+            font-family: 'NeoDunggeunmo', sans-serif;
+            border: 2px solid var(--pixel-border);
+            background: var(--bg-night-end);
+            color: var(--text-accent);
+            transition: all 0.1s;
+            box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .pixel-btn:hover {
+            background: var(--pixel-border);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .pixel-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        .pixel-input {
+            background: #050510;
+            border: 2px solid var(--pixel-border);
+            color: white;
+            font-family: 'NeoDunggeunmo', sans-serif;
+            outline: none;
+        }
+
+        .pixel-input:focus {
+            border-color: var(--text-accent);
+        }
+
+        /* Graph Elements */
+        .bg-dots-pattern {
+            background-image:
+                radial-gradient(var(--pixel-border) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .connection-line {
+            stroke: var(--pixel-border-light);
+            stroke-width: 2;
+            fill: none;
+            transition: stroke 0.2s;
+        }
+
+        .connection-line:hover {
+            stroke: var(--text-accent);
+            stroke-width: 4;
+            cursor: pointer;
+        }
+
+        .connecting-line {
+            stroke: var(--color-success);
+            stroke-width: 3;
+            stroke-dasharray: 8, 4;
+            fill: none;
+            animation: dash 0.5s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -12;
+            }
+        }
+
+        /* Node Styling */
+        .node-ui {
+            background: #1A0B2E;
+            border: 2px solid var(--pixel-border);
+            box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.1s;
+        }
+
+        .node-ui:hover {
+            border-color: var(--text-accent);
+            z-index: 50;
+        }
+
+        .node-ui.selected {
+            border-color: var(--color-success);
+            box-shadow: 0 0 0 2px var(--color-success), 4px 4px 0px 0px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+
+        .node-ui.connecting-target-candidate:hover {
+            border-color: var(--color-success);
+            cursor: crosshair !important;
+        }
+
+        .node-ui.connecting-source {
+            border-color: var(--color-danger);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 127, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 0, 127, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 127, 0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="crt-overlay"></div>
+    <div id="root" class="w-full h-full relative z-10"></div>
+
+    <script type="text/babel" src="/static/js/builder_app.js"></script>
+
+    <script src="{{ url_for('static', path='/js/tutorial.js') }}"></script>
+    <script>
+        // 튜토리얼 자동 시작 (빌더 모드)
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.TutorialSystem && window.TutorialSystem.checkAndStart) {
+                // React 렌더링 시간을 고려해 약간의 지연 후 실행
+                setTimeout(() => {
+                    window.TutorialSystem.checkAndStart('builder');
+                }, 1500);
+            }
+        });
+    </script>
+
+    <script>
+        // 모달 관리 함수
+        window.openModal = function (id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+            setTimeout(() => {
+                modal.querySelector('.modal-container').classList.remove('scale-95', 'opacity-0');
+                modal.querySelector('.modal-container').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+
+        window.closeModal = function (id) {
+            const modal = document.getElementById(id);
+            modal.querySelector('.modal-container').classList.remove('scale-100', 'opacity-100');
+            modal.querySelector('.modal-container').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                document.body.classList.remove('modal-active');
+            }, 300);
+        };
+
+        // 로그인이 필요할 때 index.html로 리다이렉트
+        window.requireLogin = function () {
+            window.location.href = '/login?show_login=true';
+        };
+    </script>
+
+    {% if show_login %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            window.requireLogin();
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        // Lucide 아이콘 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            lucide.createIcons();
+        });
+    </script>
+
+</body>
+
+</html>
